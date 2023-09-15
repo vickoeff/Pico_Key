@@ -3,7 +3,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <AiEsp32RotaryEncoder.h>
-#include "Adafruit_GFX.h"
 #include "BleKeyboard.h"
 #include "Switch.h"
 #include "Menu.h"
