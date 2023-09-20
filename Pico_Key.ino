@@ -6,6 +6,7 @@
 #include "BleKeyboard.h"
 #include "Switch.h"
 #include "Menu.h"
+#include "Games.h"
 
 // Define keyboard scale
 #define X_KEY 3
@@ -300,6 +301,12 @@ int menu_LEN = 3;
 int menuOrder[3] = {2, 0, 1}; // "Mini Games", "Keyboard", "Setting"
 Menu menu;
 
+// Games States
+int selectedGame = -1;
+int Game_LEN = 3;
+int gameOrder[3] = {2, 0, 1}; // "", "Flappy Bird", "Snake"
+Games games;
+
 BleKeyboard bleKeyboard("Pico_key", "BLough", 100);
 
 void printToOled8t(uint8_t text, int size = 3) {
@@ -366,6 +373,27 @@ void shiftMenu(int num) {
   }
 }
 
+void shiftListGame(int num) {
+  // if num = 0: shift menu to left
+  // if num = 1: shift menu to right
+  if(num == 1) {
+    // int lastEl = gameOrder[menu_LEN-1];
+    for(int i = 0; i < menu_LEN-1; i++) {
+      int lastIdx = menu_LEN-1;
+      int temp = gameOrder[lastIdx-i];
+      gameOrder[lastIdx-i] = gameOrder[lastIdx-(i+1)];
+      gameOrder[lastIdx-(i+1)] = temp;
+    }
+  } else {
+    // int firstEl = gameOrder[menu_LEN-1];
+    for(int i = 0; i < menu_LEN-1; i++) {
+      int temp = gameOrder[i];
+      gameOrder[i] = gameOrder[i+1];
+      gameOrder[i+1] = temp;
+    }
+  }
+}
+
 void updateMenuDisplay() {
   display.clearDisplay();
 
@@ -381,6 +409,24 @@ void updateMenuDisplay() {
   }
 
   display.drawBitmap( 0, 0, epd_card_allArray[menu.getFocusMenu()], 128, 64, 1);
+  display.display();
+  delay(1);
+}
+
+void updateGameMenuDisplay() {
+  display.clearDisplay();
+
+  for(int i = 0; i < max_menu_screen; i++) {
+    int posY;
+    if(i==0) posY = ((i*16) + 2*(i+1));
+    else posY = ((i*16) + 4*(i+1));
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(30, posY+4);
+    display.println(games.getGameTitle(gameOrder[i]));
+  }
+
+  display.drawBitmap( 0, 0, epd_card_allArray[games.getFocusGame()], 128, 64, 1);
   display.display();
   delay(1);
 }
@@ -414,6 +460,10 @@ void handleRunningRow() {
   }
 }
 
+void writeKeyboard(uint8_t key) {
+  printToOled8t(key);
+  bleKeyboard.write(key);
+}
 
 void watchKeySwitch() {
   handleRunningRow();
@@ -455,6 +505,10 @@ void rotary_onButtonClick() {
     }
     if(selectedMenu == -1) {
       menu.selectMenu();
+    } else if(selectedMenu == 1){
+      games.selectGame();
+      delay(10);
+      selectedGame = games.getSelectedGame();
     } else {
       menu.openMenu();
     }
@@ -502,6 +556,27 @@ void watchRotary() {
       bleKeyboard.end();
       rotary_onButtonClick();
     }
+  } else if (selectedMenu == 1) {
+    if (rotaryEncoder.encoderChanged()) {
+      if(rotaryEncoder.readEncoder() > prevEncVal) {
+        games.next();
+        shiftListGame(0);
+        updateGameMenuDisplay();
+      } else if (rotaryEncoder.readEncoder() <= prevEncVal) {
+        games.prev();
+        shiftListGame(1);
+        updateGameMenuDisplay();
+      }
+      
+      if(rotaryEncoder.readEncoder() == 0) {
+        rotaryEncoder.setEncoderValue(250);
+      }
+
+      prevEncVal = rotaryEncoder.readEncoder();
+    }
+    if (rotaryEncoder.isEncoderButtonClicked()) {
+      rotary_onButtonClick();
+    }
   }
 }
 
@@ -515,10 +590,6 @@ void sendMacroCommand(uint8_t key) {
   bleKeyboard.press(KEY_LEFT_SHIFT);
   bleKeyboard.press(KEY_LEFT_ALT);
   bleKeyboard.press(key);
-}
-void writeKeyboard(uint8_t key) {
-  printToOled8t(key);
-  bleKeyboard.write(key);
 }
 
 void setup() {
@@ -583,7 +654,7 @@ void loop() {
         display.setCursor(10, 25);
         display.print("Keyboard connected");
         display.display();
-        delay(2000);
+        delay(1500);
 
         display.clearDisplay();
 
@@ -598,7 +669,7 @@ void loop() {
         display.setCursor(10, 25);
         display.print("Keyboard disconnected");
         display.display();
-        delay(2000);
+        delay(1500);
 
         display.clearDisplay();
       } else {
@@ -615,16 +686,27 @@ void loop() {
 
   // { MINI GAMES RUN }
   else if(selectedMenu == 1) {
-    // Mini games should be in here
-        display.clearDisplay(); // Clear display buffer
-        display.setTextSize(1); // Draw 2X-scale text
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(2, 25);
-        display.print("This feature is");
-        display.print("undermaintenance ^-^");
-        display.display();
-        selectedMenu = -1;
-        delay(1500);
+    updateGameMenuDisplay();
+    watchRotary();
+        
+    handleRunningRow();
+    if(sw_1.isPressed()) {
+      selectedMenu = -1;
+    }
+
+    while(selectedGame == 0){
+      handleRunningRow();
+      display.clearDisplay(); // Clear display buffer
+      display.setTextSize(1); // Draw 2X-scale text
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(2, 25);
+      display.print("Playing Flappy Bird");
+      display.display();
+
+      if(sw_1.isPressed()) {
+        selectedGame = -1;
+      }
+    }
   }
   // { MINI GAMES END }
 
