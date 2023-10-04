@@ -316,9 +316,16 @@ Menu menu(menus);
 // Games States
 int selectedGame = -1;
 int Game_LEN = 3;
-int gameOrder[3] = {2, 0, 1}; // "", "Flappy Bird", "Snake"
+int gameOrder[3] = {2, 0, 1};
 String listGames[3] = {"Flappy Bird", "Snake", ""};
 Menu games(listGames);
+
+// Games States
+int selectedSetting = -1;
+int Setting_LEN = 3;
+int settingOrder[3] = {2, 0, 1};
+String listSetting[3] = {"Macro Key", "Game Key", "Help"};
+Menu settings(listSetting);
 
 BleKeyboard bleKeyboard("Pico_key", "BLough", 100);
 
@@ -419,6 +426,27 @@ void shiftListGame(int num) {
   }
 }
 
+void shiftListSetting(int num) {
+  // if num = 0: shift menu to left
+  // if num = 1: shift menu to right
+  if(num == 1) {
+    // int lastEl = gameOrder[menu_LEN-1];
+    for(int i = 0; i < menu_LEN-1; i++) {
+      int lastIdx = menu_LEN-1;
+      int temp = settingOrder[lastIdx-i];
+      settingOrder[lastIdx-i] = settingOrder[lastIdx-(i+1)];
+      settingOrder[lastIdx-(i+1)] = temp;
+    }
+  } else {
+    // int firstEl = gameOrder[menu_LEN-1];
+    for(int i = 0; i < menu_LEN-1; i++) {
+      int temp = settingOrder[i];
+      settingOrder[i] = settingOrder[i+1];
+      settingOrder[i+1] = temp;
+    }
+  }
+}
+
 void updateMenuDisplay() {
   display.clearDisplay();
 
@@ -452,6 +480,24 @@ void updateGameMenuDisplay() {
   }
 
   display.drawBitmap( 0, 0, epd_card_allArray[games.getFocusMenu()], 128, 64, 1);
+  display.display();
+  delay(1);
+}
+
+void updateSettingMenuDisplay() {
+  display.clearDisplay();
+
+  for(int i = 0; i < max_menu_screen; i++) {
+    int posY;
+    if(i==0) posY = ((i*16) + 2*(i+1));
+    else posY = ((i*16) + 4*(i+1));
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(30, posY+4);
+    display.println(settings.getMenuText(settingOrder[i]));
+  }
+
+  display.drawBitmap( 0, 0, epd_card_allArray[settings.getFocusMenu()], 128, 64, 1);
   display.display();
   delay(1);
 }
@@ -534,6 +580,10 @@ void rotary_onButtonClick() {
       games.selectMenu();
       delay(10);
       selectedGame = games.getSelectedMenu();
+    } else if(selectedMenu == 2){
+      settings.selectMenu();
+      delay(10);
+      selectedSetting = settings.getSelectedMenu();
     } else {
       menu.openMenu();
     }
@@ -591,6 +641,27 @@ void watchRotary() {
         games.prev();
         shiftListGame(1);
         updateGameMenuDisplay();
+      }
+      
+      if(rotaryEncoder.readEncoder() == 0) {
+        rotaryEncoder.setEncoderValue(250);
+      }
+
+      prevEncVal = rotaryEncoder.readEncoder();
+    }
+    if (rotaryEncoder.isEncoderButtonClicked()) {
+      rotary_onButtonClick();
+    }
+  } else if (selectedMenu == 2) {
+    if (rotaryEncoder.encoderChanged()) {
+      if(rotaryEncoder.readEncoder() > prevEncVal) {
+        settings.next();
+        shiftListSetting(0);
+        updateSettingMenuDisplay();
+      } else if (rotaryEncoder.readEncoder() <= prevEncVal) {
+        settings.prev();
+        shiftListSetting(1);
+        updateSettingMenuDisplay();
       }
       
       if(rotaryEncoder.readEncoder() == 0) {
@@ -740,7 +811,13 @@ void loop() {
 
   // { SETTING RUN }
   else if(selectedMenu == 2) {
-    
+    updateSettingMenuDisplay();
+    watchRotary();
+
+    handleRunningRow();
+    if(sw_1.isPressed()) {
+      selectedMenu = -1;
+    }
   }
   // { SETTING END }
 }
