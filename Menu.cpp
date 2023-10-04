@@ -1,6 +1,9 @@
 #include "Menu.h"
 
-Menu::Menu() {
+Menu::Menu(String menus[3]) {
+  for(int i = 0; i < 3; i++) {
+    this->menus[i] = menus[i];
+  }
   focusMenu = 0;
   selectedMenu = 0;
 }

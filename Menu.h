@@ -6,11 +6,11 @@
 class Menu {
   private:
     int menu_LEN = 3;
-    String menus[3] = {"Keyboard", "Mini Games", "Setting"};
+    String menus[3];
     int focusMenu;
     int selectedMenu;
   public:
-    Menu();
+    Menu(String menus[3]);
     String getMenuText(int num);
     int getFocusMenu();
     int getSelectedMenu();

@@ -3,10 +3,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <AiEsp32RotaryEncoder.h>
+#include <EEPROM.h>
 #include "BleKeyboard.h"
 #include "Switch.h"
 #include "Menu.h"
-#include "Games.h"
+
+#define EEPROM_SIZE 512 // Adjust the size as needed
 
 // Define keyboard scale
 #define X_KEY 3
@@ -43,15 +45,25 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 AiEsp32RotaryEncoder rotaryEncoder = AiEsp32RotaryEncoder(ROTARY_ENCODER_A_PIN, ROTARY_ENCODER_B_PIN, ROTARY_ENCODER_BUTTON_PIN, ROTARY_ENCODER_VCC_PIN, ROTARY_ENCODER_STEPS);
 
 // Define Switch
-Switch sw_1('a', ROW_1, COL_1);
-Switch sw_2('b', ROW_1, COL_2);
-Switch sw_3('c', ROW_1, COL_3);
-Switch sw_4('d', ROW_2, COL_1);
-Switch sw_5('e', ROW_2, COL_2);
-Switch sw_6('f', ROW_2, COL_3);
-Switch sw_7('g', ROW_3, COL_1);
-Switch sw_8('h', ROW_3, COL_2);
-Switch sw_9(0xB0, ROW_3, COL_3);
+byte sw_1_key = 'a';
+byte sw_2_key = 'a';
+byte sw_3_key = 'a';
+byte sw_4_key = 'a';
+byte sw_5_key = 'a';
+byte sw_6_key = 'a';
+byte sw_7_key = 'a';
+byte sw_8_key = 'a';
+byte sw_9_key = 'a';
+
+Switch sw_1(sw_1_key, ROW_1, COL_1);
+Switch sw_2(sw_2_key, ROW_1, COL_2);
+Switch sw_3(sw_3_key, ROW_1, COL_3);
+Switch sw_4(sw_4_key, ROW_2, COL_1);
+Switch sw_5(sw_5_key, ROW_2, COL_2);
+Switch sw_6(sw_6_key, ROW_2, COL_3);
+Switch sw_7(sw_7_key, ROW_3, COL_1);
+Switch sw_8(sw_8_key, ROW_3, COL_2);
+Switch sw_9(sw_9_key, ROW_3, COL_3);
 
 // Defin Bitmaps
 // 'scroll-position_0', 128x64px
@@ -284,7 +296,6 @@ const unsigned char* epd_icon_allArray[3] = {
 	epd_bitmap_setting_icon
 };
 
-
 // Row Active States
 byte rowActv[3] = {1, 0, 0};
 int iteration = 0;
@@ -299,15 +310,29 @@ int selectedMenu = -1;
 int max_menu_screen = 3;
 int menu_LEN = 3;
 int menuOrder[3] = {2, 0, 1}; // "Mini Games", "Keyboard", "Setting"
-Menu menu;
+String menus[3] = {"Keyboard", "Mini Games", "Setting"};
+Menu menu(menus);
 
 // Games States
 int selectedGame = -1;
 int Game_LEN = 3;
 int gameOrder[3] = {2, 0, 1}; // "", "Flappy Bird", "Snake"
-Games games;
+String listGames[3] = {"Flappy Bird", "Snake", ""};
+Menu games(listGames);
 
 BleKeyboard bleKeyboard("Pico_key", "BLough", 100);
+
+void initKeyboardKey() {
+  sw_1_key = EEPROM.read(0) ? EEPROM.read(0) : sw_1_key;
+  sw_2_key = EEPROM.read(1) ? EEPROM.read(1) : sw_2_key;
+  sw_3_key = EEPROM.read(2) ? EEPROM.read(2) : sw_3_key;
+  sw_4_key = EEPROM.read(3) ? EEPROM.read(3) : sw_4_key;
+  sw_5_key = EEPROM.read(4) ? EEPROM.read(4) : sw_5_key;
+  sw_6_key = EEPROM.read(5) ? EEPROM.read(5) : sw_6_key;
+  sw_7_key = EEPROM.read(6) ? EEPROM.read(6) : sw_7_key;
+  sw_8_key = EEPROM.read(7) ? EEPROM.read(7) : sw_8_key;
+  sw_9_key = EEPROM.read(8) ? EEPROM.read(8) : sw_9_key;
+}
 
 void printToOled8t(uint8_t text, int size = 3) {
   display.clearDisplay(); // Clear display buffer
@@ -423,10 +448,10 @@ void updateGameMenuDisplay() {
     display.setTextSize(1);
     display.setTextColor(WHITE);
     display.setCursor(30, posY+4);
-    display.println(games.getGameTitle(gameOrder[i]));
+    display.println(games.getMenuText(gameOrder[i]));
   }
 
-  display.drawBitmap( 0, 0, epd_card_allArray[games.getFocusGame()], 128, 64, 1);
+  display.drawBitmap( 0, 0, epd_card_allArray[games.getFocusMenu()], 128, 64, 1);
   display.display();
   delay(1);
 }
@@ -506,9 +531,9 @@ void rotary_onButtonClick() {
     if(selectedMenu == -1) {
       menu.selectMenu();
     } else if(selectedMenu == 1){
-      games.selectGame();
+      games.selectMenu();
       delay(10);
-      selectedGame = games.getSelectedGame();
+      selectedGame = games.getSelectedMenu();
     } else {
       menu.openMenu();
     }
@@ -593,6 +618,8 @@ void sendMacroCommand(uint8_t key) {
 }
 
 void setup() {
+  EEPROM.begin(EEPROM_SIZE);
+
   // PinIO Configurations
   pinMode(ROW_1, OUTPUT);
   pinMode(ROW_2, OUTPUT);
@@ -628,10 +655,11 @@ void setup() {
   // start BleKeyboard
   bleKeyboard.begin();
 
+  initKeyboardKey();
+
   display.display();
   display.clearDisplay();
   delay(2000);
-
 }
 
 void loop() {
@@ -712,16 +740,7 @@ void loop() {
 
   // { SETTING RUN }
   else if(selectedMenu == 2) {
-    // Setting should be in here
-        display.clearDisplay(); // Clear display buffer
-        display.setTextSize(1); // Draw 2X-scale text
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(2, 25);
-        display.print("This feature is");
-        display.print("undermaintenance ^-^");
-        display.display();
-        selectedMenu = -1;
-        delay(1500);
+    
   }
   // { SETTING END }
 }
