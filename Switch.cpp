@@ -5,6 +5,7 @@ Switch::Switch(uint8_t key, byte addressRow, byte addressCol) {
   this->addressRow = addressRow;
   this->addressCol = addressCol;
   lastSteadyState = LOW;
+  onHold = false;
   init();
 }
 void Switch::init() {
@@ -12,31 +13,51 @@ void Switch::init() {
   update();
 }
 void Switch::update() {
-    int newStateRow = digitalRead(addressRow);
-    int newStateCol = digitalRead(addressCol);
-    int newState;
+  int newStateRow = digitalRead(addressRow);
+  int newStateCol = digitalRead(addressCol);
+  int newState;
     
-    if (newStateRow && newStateCol) {
-      newState = HIGH;
-    } else {
-      newState = LOW;
-    }
+  if (newStateRow && newStateCol) {
+    newState = HIGH;
+  } else {
+    newState = LOW;
+  }
 
-    if (newState != lastSteadyState) {
-      if ((millis() - lastDebounceTime) < debounceDelay && lastSteadyState) {
-        lastDebounceTime = millis();
-        // save on press state
+  if (newState != lastSteadyState) {
+    if ((millis() - lastDebounceTime) > debounceDelay && (millis() - lastHoldTime) < holdTime) {
+      // save on release state
+      lastSteadyState = newState;
+      Serial.println("Update State");
+
+      lastHoldTime = millis();
+    }
+      
+    if ((millis() - lastHoldTime) > holdTime ) {
+      Serial.print("holding: ");
+      Serial.println(onHold);
+      if ((millis() - lastDebounceTime) > debounceDelay) {
+        onHold = true;
         lastSteadyState = newState;
-      } else if ((millis() - lastDebounceTime) > debounceDelay) {
-        lastDebounceTime = millis();
-        // save on release state
-        lastSteadyState = newState;
+        Serial.println("hold state");
+        
+        if (newState == LOW && lastSteadyState == LOW) {
+          onHold = false;
+          lastSteadyState = LOW;
+          Serial.println("hold state release");
+        }
       }
     }
+
+    lastDebounceTime = millis(); 
+  }
 }
 byte Switch::getState() {
   update();
   return lastSteadyState;
+}
+bool Switch::getHoldState() {
+  update();
+  return onHold;
 }
 bool Switch::isPressed() {
   return (getState() == HIGH);

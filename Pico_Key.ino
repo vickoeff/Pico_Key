@@ -44,16 +44,16 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // Define Rotary Encoder Configuration
 AiEsp32RotaryEncoder rotaryEncoder = AiEsp32RotaryEncoder(ROTARY_ENCODER_A_PIN, ROTARY_ENCODER_B_PIN, ROTARY_ENCODER_BUTTON_PIN, ROTARY_ENCODER_VCC_PIN, ROTARY_ENCODER_STEPS);
 
-// Define Switch
-byte sw_1_key = 'a';
-byte sw_2_key = 'a';
-byte sw_3_key = 'a';
-byte sw_4_key = 'a';
-byte sw_5_key = 'a';
-byte sw_6_key = 'a';
-byte sw_7_key = 'a';
-byte sw_8_key = 'a';
-byte sw_9_key = 'a';
+// Define Default Switch key
+byte sw_1_key = KEY_LEFT_ARROW;
+byte sw_2_key = KEY_UP_ARROW;
+byte sw_3_key = '[';
+byte sw_4_key = KEY_DOWN_ARROW;
+byte sw_5_key = KEY_RIGHT_ARROW;
+byte sw_6_key = ']';
+byte sw_7_key = '/';
+byte sw_8_key = ';';
+byte sw_9_key = ',';
 
 Switch sw_1(sw_1_key, ROW_1, COL_1);
 Switch sw_2(sw_2_key, ROW_1, COL_2);
@@ -531,40 +531,149 @@ void handleRunningRow() {
   }
 }
 
+bool keyStates[9] = {false, false, false, false, false, false, false, false, false};
+
 void writeKeyboard(uint8_t key) {
   printToOled8t(key);
   bleKeyboard.write(key);
+}
+void pressKeyboard(uint8_t key, int idx) {
+  printToOled8t(key);
+  bleKeyboard.press(key);
+
+  keyStates[idx] = true;
 }
 
 void watchKeySwitch() {
   handleRunningRow();
 
-  if (sw_1.isPressed()) {
-    writeKeyboard(sw_1.getKey());
+  if(sw_1.isPressed() && !keyStates[0]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_1.getKey(), 0);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_2.isPressed()) {
-    writeKeyboard(sw_2.getKey());
+  if(sw_2.isPressed() && !keyStates[1]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_2.getKey(), 1);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_3.isPressed()) {
-    writeKeyboard(sw_3.getKey());
+  if(sw_3.isPressed() && !keyStates[2]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_3.getKey(), 2);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_4.isPressed()) {
-    writeKeyboard(sw_4.getKey());
+  if(sw_4.isPressed() && !keyStates[3]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_4.getKey(), 3);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_5.isPressed()) {
-    writeKeyboard(sw_5.getKey());
+  if(sw_5.isPressed() && !keyStates[4]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_5.getKey(), 4);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_6.isPressed()) {
-    writeKeyboard(sw_6.getKey());
+  if(sw_6.isPressed() && !keyStates[5]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_6.getKey(), 5);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_7.isPressed()) {
-    writeKeyboard(sw_7.getKey());
+  if(sw_7.isPressed() && !keyStates[6]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_7.getKey(), 6);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_8.isPressed()) {
-    writeKeyboard(sw_8.getKey());
+  if(sw_8.isPressed() && !keyStates[7]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_8.getKey(), 7);
+    delay(4); // must add delay before release < debounce delay
   }
-  if (sw_9.isPressed()) {
-    writeKeyboard(sw_9.getKey());
+  if(sw_9.isPressed() && !keyStates[8]) {
+    Serial.println("pressed");
+    pressKeyboard(sw_9.getKey(), 8);
+    delay(4); // must add delay before release < debounce delay
+  }
+
+  if(sw_1.getHoldState() && !keyStates[0]) {
+    Serial.println("hold");
+    pressKeyboard(sw_1.getKey(), 0);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_2.getHoldState() && !keyStates[1]) {
+    Serial.println("hold");
+    pressKeyboard(sw_2.getKey(), 1);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_3.getHoldState() && !keyStates[2]) {
+    Serial.println("hold");
+    pressKeyboard(sw_3.getKey(), 2);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_4.getHoldState() && !keyStates[3]) {
+    Serial.println("hold");
+    pressKeyboard(sw_4.getKey(), 3);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_5.getHoldState() && !keyStates[4]) {
+    Serial.println("hold");
+    pressKeyboard(sw_5.getKey(), 4);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_6.getHoldState() && !keyStates[5]) {
+    Serial.println("hold");
+    pressKeyboard(sw_6.getKey(), 5);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_7.getHoldState() && !keyStates[6]) {
+    Serial.println("hold");
+    pressKeyboard(sw_7.getKey(), 6);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_8.getHoldState() && !keyStates[7]) {
+    Serial.println("hold");
+    pressKeyboard(sw_8.getKey(), 7);
+    delay(4); // must add delay before release < debounce delay
+  }
+  if(sw_9.getHoldState() && !keyStates[8]) {
+    Serial.println("hold");
+    pressKeyboard(sw_9.getKey(), 8);
+    delay(4); // must add delay before release < debounce delay
+  }
+
+  if(!sw_1.getHoldState() && keyStates[0]) {
+    bleKeyboard.release(sw_1.getKey());
+    keyStates[0] = false;
+  }
+  if(!sw_2.getHoldState() && keyStates[1]) {
+    bleKeyboard.release(sw_2.getKey());
+    keyStates[1] = false;
+  }
+  if(!sw_3.getHoldState() && keyStates[2]) {
+    bleKeyboard.release(sw_3.getKey());
+    keyStates[2] = false;
+  }
+  if(!sw_4.getHoldState() && keyStates[3]) {
+    bleKeyboard.release(sw_4.getKey());
+    keyStates[3] = false;
+  }
+  if(!sw_5.getHoldState() && keyStates[4]) {
+    bleKeyboard.release(sw_5.getKey());
+    keyStates[4] = false;
+  }
+  if(!sw_6.getHoldState() && keyStates[5]) {
+    bleKeyboard.release(sw_6.getKey());
+    keyStates[5] = false;
+  }
+  if(!sw_7.getHoldState() && keyStates[6]) {
+    bleKeyboard.release(sw_7.getKey());
+    keyStates[6] = false;
+  }
+  if(!sw_8.getHoldState() && keyStates[7]) {
+    bleKeyboard.release(sw_8.getKey());
+    keyStates[7] = false;
+  }
+  if(!sw_9.getHoldState() && keyStates[8]) {
+    bleKeyboard.release(sw_9.getKey());
+    keyStates[8] = false;
   }
 }
 
@@ -727,6 +836,8 @@ void setup() {
   bleKeyboard.begin();
 
   initKeyboardKey();
+  
+  rotaryEncoder.setEncoderValue(250);
 
   display.display();
   display.clearDisplay();
@@ -774,7 +885,7 @@ void loop() {
       } else {
         waitDisplay();
       }
-      
+
       if (rotaryEncoder.isEncoderButtonClicked()) {
         bleKeyboard.end();
         rotary_onButtonClick();
@@ -787,12 +898,11 @@ void loop() {
   else if(selectedMenu == 1) {
     updateGameMenuDisplay();
     watchRotary();
-        
+
     handleRunningRow();
     if(sw_1.isPressed()) {
       selectedMenu = -1;
     }
-
     while(selectedGame == 0){
       handleRunningRow();
       display.clearDisplay(); // Clear display buffer
