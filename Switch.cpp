@@ -24,28 +24,12 @@ void Switch::update() {
   }
 
   if (newState != lastSteadyState) {
-    if ((millis() - lastDebounceTime) > debounceDelay && (millis() - lastHoldTime) < holdTime) {
+    if ((millis() - lastDebounceTime) > debounceDelay || (millis() - lastHoldTime) > holdTime) {
       // save on release state
       lastSteadyState = newState;
       Serial.println("Update State");
 
       lastHoldTime = millis();
-    }
-      
-    if ((millis() - lastHoldTime) > holdTime ) {
-      Serial.print("holding: ");
-      Serial.println(onHold);
-      if ((millis() - lastDebounceTime) > debounceDelay) {
-        onHold = true;
-        lastSteadyState = newState;
-        Serial.println("hold state");
-        
-        if (newState == LOW && lastSteadyState == LOW) {
-          onHold = false;
-          lastSteadyState = LOW;
-          Serial.println("hold state release");
-        }
-      }
     }
 
     lastDebounceTime = millis(); 

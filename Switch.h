@@ -11,8 +11,8 @@ class Switch {
     int lastSteadyState;
     bool onHold;
     unsigned long lastDebounceTime = 0;
-    unsigned long debounceDelay = 20;
-    unsigned long holdTime = 500;
+    unsigned long debounceDelay = 12;
+    unsigned long holdTime = 400;
     unsigned long lastHoldTime = 0;
   public:
     Switch(uint8_t key, byte addressRow, byte addressCol);
